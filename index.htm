@@ -1,0 +1,797 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>G.Take | Startup Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        :root {
+            --bg-dark: #0B0E14;
+            --bg-secondary: #151A23;
+            --primary-accent: #3b82f6;
+            --primary-glow: rgba(59, 130, 246, 0.5);
+            --glass-bg: rgba(255, 255, 255, 0.03);
+            --glass-border: rgba(255, 255, 255, 0.08);
+            --text-main: #ffffff;
+            --text-muted: #94a3b8;
+            --success: #10b981;
+            --font-main: 'Inter', sans-serif;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            outline: none;
+        }
+
+        body {
+            font-family: var(--font-main);
+            background-color: var(--bg-dark);
+            background-image: 
+                radial-gradient(circle at 10% 20%, rgba(37, 99, 235, 0.15) 0%, transparent 40%),
+                radial-gradient(circle at 90% 80%, rgba(139, 92, 246, 0.1) 0%, transparent 40%);
+            color: var(--text-main);
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 10px; }
+
+        /* --- Utilities --- */
+        .glass-card {
+            background: var(--glass-bg);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid var(--glass-border);
+            border-radius: 20px;
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border-radius: 12px;
+            border: none;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            font-size: 0.9rem;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #2563eb, #1d4ed8);
+            color: white;
+            box-shadow: 0 0 15px var(--primary-glow);
+        }
+
+        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 0 25px var(--primary-glow); }
+        
+        .btn-ghost { background: transparent; color: var(--text-muted); }
+        .btn-ghost:hover { color: white; background: rgba(255,255,255,0.05); }
+
+        .hidden { display: none !important; }
+        .fade-in { animation: fadeIn 0.4s ease forwards; }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* --- Auth Screen --- */
+        #auth-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            position: relative;
+            z-index: 1000;
+        }
+
+        .auth-box {
+            width: 400px;
+            padding: 40px;
+            text-align: center;
+        }
+
+        .auth-input {
+            width: 100%;
+            padding: 12px 16px;
+            margin: 10px 0;
+            background: rgba(0,0,0,0.3);
+            border: 1px solid var(--glass-border);
+            border-radius: 10px;
+            color: white;
+        }
+
+        /* --- Main Layout --- */
+        #app-container {
+            display: grid;
+            grid-template-columns: 260px 1fr 320px; /* Sidebar, Content, Right Panel */
+            height: 100vh;
+            max-width: 1920px;
+            margin: 0 auto;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            padding: 30px 20px;
+            display: flex;
+            flex-direction: column;
+            border-right: 1px solid var(--glass-border);
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 50px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .logo span { color: var(--primary-accent); }
+
+        .nav-menu { list-style: none; flex: 1; }
+        .nav-item {
+            margin-bottom: 10px;
+            padding: 12px 16px;
+            border-radius: 12px;
+            cursor: pointer;
+            color: var(--text-muted);
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            transition: 0.3s;
+        }
+        .nav-item:hover, .nav-item.active {
+            background: rgba(37, 99, 235, 0.15);
+            color: white;
+            border-left: 3px solid var(--primary-accent);
+        }
+        
+        /* Center Content */
+        .main-content {
+            padding: 30px;
+            overflow-y: auto;
+            position: relative;
+        }
+
+        .page-header {
+            margin-bottom: 30px;
+        }
+        .page-header h1 { font-size: 2rem; margin-bottom: 5px; }
+        .page-header p { color: var(--text-muted); }
+
+        /* Dashboard: Chatbot */
+        .chat-container {
+            height: 65vh;
+            display: flex;
+            flex-direction: column;
+            padding: 20px;
+        }
+
+        .chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .msg {
+            max-width: 75%;
+            padding: 12px 18px;
+            border-radius: 14px;
+            font-size: 0.95rem;
+            line-height: 1.5;
+        }
+        .msg.bot { background: rgba(255,255,255,0.05); align-self: flex-start; border-bottom-left-radius: 2px; }
+        .msg.user { background: var(--primary-accent); align-self: flex-end; border-bottom-right-radius: 2px; }
+
+        .chat-input-area {
+            display: flex;
+            gap: 10px;
+            background: rgba(0,0,0,0.2);
+            padding: 10px;
+            border-radius: 15px;
+            border: 1px solid var(--glass-border);
+        }
+        .chat-input {
+            flex: 1;
+            background: transparent;
+            border: none;
+            color: white;
+            padding: 5px;
+        }
+
+        .quick-prompts {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+        }
+        .chip {
+            padding: 6px 12px;
+            border-radius: 20px;
+            background: rgba(255,255,255,0.05);
+            font-size: 0.8rem;
+            cursor: pointer;
+            border: 1px solid transparent;
+        }
+        .chip:hover { border-color: var(--primary-accent); color: var(--primary-accent); }
+
+        /* Tasks Page */
+        .task-list { margin-top: 20px; }
+        .task-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 15px;
+            margin-bottom: 10px;
+            background: rgba(255,255,255,0.02);
+            border-radius: 12px;
+            border: 1px solid transparent;
+        }
+        .task-item:hover { border-color: rgba(255,255,255,0.1); background: rgba(255,255,255,0.04); }
+        .task-left { display: flex; align-items: center; gap: 15px; }
+        .task-check {
+            width: 20px; height: 20px; border-radius: 50%;
+            border: 2px solid var(--text-muted);
+            cursor: pointer;
+            display: grid; place-items: center;
+        }
+        .task-item.completed .task-check { background: var(--success); border-color: var(--success); }
+        .task-item.completed span { text-decoration: line-through; color: var(--text-muted); }
+
+        /* Community Feed */
+        .post-card {
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        .post-header { display: flex; gap: 12px; align-items: center; margin-bottom: 15px; }
+        .avatar { width: 40px; height: 40px; border-radius: 50%; background: #333; display: grid; place-items: center; font-weight: bold; }
+        .post-actions { margin-top: 15px; display: flex; gap: 20px; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 15px; }
+        .action-btn { color: var(--text-muted); cursor: pointer; display: flex; align-items: center; gap: 5px; font-size: 0.9rem; }
+        .action-btn:hover { color: var(--primary-accent); }
+
+        /* Right Panel */
+        .right-panel {
+            padding: 30px 20px;
+            border-left: 1px solid var(--glass-border);
+            overflow-y: auto;
+        }
+        .widget { margin-bottom: 30px; }
+        .widget-title { font-size: 1rem; margin-bottom: 15px; display: flex; justify-content: space-between; }
+        
+        .news-item {
+            margin-bottom: 15px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+        }
+        .news-tag { font-size: 0.7rem; color: var(--primary-accent); text-transform: uppercase; letter-spacing: 1px; }
+        .news-headline { font-size: 0.9rem; margin-top: 5px; line-height: 1.4; }
+        .news-time { font-size: 0.75rem; color: var(--text-muted); margin-top: 5px; display: block; }
+
+        .progress-card {
+            padding: 20px;
+            background: linear-gradient(145deg, rgba(255,255,255,0.05), rgba(0,0,0,0.2));
+        }
+        .progress-bar { height: 6px; background: #333; border-radius: 3px; margin-top: 10px; overflow: hidden; }
+        .progress-fill { height: 100%; background: var(--primary-accent); width: 70%; }
+
+        /* Responsive */
+        @media (max-width: 1024px) {
+            #app-container { grid-template-columns: 80px 1fr 280px; }
+            .logo span, .nav-item span { display: none; }
+            .nav-item { justify-content: center; }
+        }
+
+        @media (max-width: 768px) {
+            #app-container { display: flex; flex-direction: column; height: auto; min-height: 100vh; }
+            .sidebar { 
+                flex-direction: row; 
+                padding: 10px; 
+                align-items: center; 
+                justify-content: space-between;
+                border-right: none;
+                border-bottom: 1px solid var(--glass-border);
+            }
+            .nav-menu { display: flex; gap: 10px; flex: 0; }
+            .logo { margin-bottom: 0; font-size: 1.2rem; }
+            .logo span { display: inline; }
+            .nav-item span { display: none; }
+            .right-panel { display: none; } /* Simplified for mobile */
+            .chat-container { height: 50vh; }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="auth-container">
+        <div class="glass-card auth-box">
+            <div class="logo" style="justify-content: center; margin-bottom: 20px;">
+                <i class="fa-solid fa-rocket" style="color: #3b82f6;"></i>
+                <span>G.Take</span>
+            </div>
+            <h2 id="auth-title">Welcome Back</h2>
+            <p style="color: var(--text-muted); margin-bottom: 20px;">Manage your startup journey</p>
+            
+            <form id="auth-form">
+                <input type="text" id="name-input" class="auth-input hidden" placeholder="Full Name">
+                <input type="email" id="email-input" class="auth-input" placeholder="Email" required>
+                <input type="password" id="password-input" class="auth-input" placeholder="Password" required>
+                <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 10px;">Login</button>
+            </form>
+            
+            <p style="margin-top: 20px; font-size: 0.9rem;">
+                <span id="auth-switch-text">New here? </span>
+                <a href="#" id="auth-switch-btn" style="color: var(--primary-accent);">Create account</a>
+            </p>
+        </div>
+    </div>
+
+    <div id="app-container" class="hidden">
+        
+        <aside class="sidebar">
+            <div class="logo">
+                <i class="fa-solid fa-rocket" style="color: #3b82f6;"></i>
+                <span>G.Take</span>
+            </div>
+            <ul class="nav-menu">
+                <li class="nav-item active" onclick="app.nav('dashboard')">
+                    <i class="fa-solid fa-house"></i> <span>Dashboard</span>
+                </li>
+                <li class="nav-item" onclick="app.nav('tasks')">
+                    <i class="fa-solid fa-list-check"></i> <span>Tasks</span>
+                </li>
+                <li class="nav-item" onclick="app.nav('community')">
+                    <i class="fa-solid fa-users"></i> <span>Community</span>
+                </li>
+                <li class="nav-item" onclick="app.nav('profile')">
+                    <i class="fa-solid fa-user"></i> <span>Profile</span>
+                </li>
+            </ul>
+            <div class="nav-item" onclick="app.logout()" style="margin-top: auto;">
+                <i class="fa-solid fa-right-from-bracket"></i> <span>Logout</span>
+            </div>
+        </aside>
+
+        <main class="main-content">
+            
+            <div id="page-dashboard" class="page-section fade-in">
+                <div class="page-header">
+                    <h1>Make Things Simple!</h1>
+                    <p>Management and planning in a simple and attractive style.</p>
+                </div>
+
+                <div class="glass-card chat-container">
+                    <div class="quick-prompts">
+                        <div class="chip" onclick="app.sendPrompt('Give me a startup idea')">💡 Startup Idea</div>
+                        <div class="chip" onclick="app.sendPrompt('Create a marketing plan')">📈 Marketing</div>
+                        <div class="chip" onclick="app.sendPrompt('Write a pitch deck outline')">📝 Pitch Deck</div>
+                    </div>
+                    <div class="chat-messages" id="chat-messages">
+                        <div class="msg bot">Hello! I'm your AI startup assistant. How can I help you build your business today?</div>
+                    </div>
+                    <div class="chat-input-area">
+                        <button class="btn-ghost"><i class="fa-solid fa-paperclip"></i></button>
+                        <input type="text" id="chat-input" class="chat-input" placeholder="Ask AI about your business...">
+                        <button class="btn-primary" onclick="app.sendMessage()"><i class="fa-solid fa-paper-plane"></i></button>
+                    </div>
+                </div>
+            </div>
+
+            <div id="page-tasks" class="page-section hidden fade-in">
+                <div class="page-header">
+                    <h1>My Tasks</h1>
+                    <p>Track your startup progress.</p>
+                </div>
+                
+                <div class="glass-card" style="padding: 20px; margin-bottom: 20px;">
+                    <div style="display: flex; gap: 10px;">
+                        <input type="text" id="new-task-input" class="auth-input" style="margin: 0;" placeholder="Add a new task...">
+                        <button class="btn btn-primary" onclick="app.addTask()">Add</button>
+                    </div>
+                </div>
+
+                <div id="task-list-container" class="task-list">
+                    </div>
+            </div>
+
+            <div id="page-community" class="page-section hidden fade-in">
+                <div class="page-header">
+                    <h1>Community Feed</h1>
+                    <p>Connect with other founders.</p>
+                </div>
+
+                <div class="glass-card" style="padding: 20px; margin-bottom: 20px;">
+                    <textarea id="post-input" class="auth-input" rows="3" placeholder="Share your startup update..." style="resize: none;"></textarea>
+                    <div style="text-align: right; margin-top: 10px;">
+                        <button class="btn btn-primary" onclick="app.addPost()">Post Update</button>
+                    </div>
+                </div>
+
+                <div id="feed-container">
+                    </div>
+            </div>
+
+            <div id="page-profile" class="page-section hidden fade-in">
+                <div class="page-header">
+                    <h1>Profile Settings</h1>
+                </div>
+                <div class="glass-card" style="padding: 30px; max-width: 600px;">
+                    <div style="display: flex; gap: 20px; align-items: center; margin-bottom: 30px;">
+                        <div class="avatar" style="width: 80px; height: 80px; font-size: 2rem; background: var(--primary-accent);">
+                            <span id="profile-avatar-letter">U</span>
+                        </div>
+                        <div>
+                            <h3 id="profile-name-display">User Name</h3>
+                            <p style="color: var(--text-muted);">Founder</p>
+                        </div>
+                    </div>
+                    
+                    <label style="display: block; margin-bottom: 5px; font-size: 0.9rem;">Display Name</label>
+                    <input type="text" id="profile-name-input" class="auth-input" style="margin-bottom: 20px;">
+
+                    <label style="display: block; margin-bottom: 5px; font-size: 0.9rem;">Bio</label>
+                    <textarea id="profile-bio-input" class="auth-input" rows="3" style="margin-bottom: 20px;"></textarea>
+
+                    <button class="btn btn-primary" onclick="app.saveProfile()">Save Changes</button>
+                </div>
+            </div>
+
+        </main>
+
+        <aside class="right-panel">
+            
+            <div class="glass-card progress-card widget">
+                <div class="widget-title">
+                    <span>Today's Progress</span>
+                    <span style="color: var(--primary-accent);">70%</span>
+                </div>
+                <div class="progress-bar">
+                    <div class="progress-fill"></div>
+                </div>
+                <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 10px;">13 Tasks completed</p>
+            </div>
+
+            <div class="widget">
+                <div class="widget-title">
+                    <span>Business News</span>
+                    <i class="fa-solid fa-rotate-right" style="cursor: pointer;" onclick="app.renderNews()"></i>
+                </div>
+                <div id="news-container">
+                    </div>
+            </div>
+
+            <div class="glass-card widget" style="padding: 20px;">
+                <div class="widget-title">My Files</div>
+                <div style="display: flex; gap: 10px; color: var(--text-muted);">
+                    <i class="fa-solid fa-file-pdf fa-2x"></i>
+                    <i class="fa-solid fa-file-word fa-2x"></i>
+                    <i class="fa-solid fa-file-image fa-2x"></i>
+                </div>
+                <div style="margin-top: 15px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 10px; font-size: 0.85rem;">
+                    <i class="fa-solid fa-plus"></i> Add file
+                </div>
+            </div>
+
+        </aside>
+
+    </div>
+
+    <script>
+        const AppState = {
+            currentUser: null,
+            users: JSON.parse(localStorage.getItem('g_take_users')) || [],
+            isLoginMode: true
+        };
+
+        const app = {
+            init: () => {
+                // Check session
+                const session = localStorage.getItem('g_take_session');
+                if (session) {
+                    AppState.currentUser = JSON.parse(session);
+                    app.showApp();
+                } else {
+                    app.showAuth();
+                }
+
+                // Initial Renders
+                app.renderNews();
+                
+                // Event Listeners
+                document.getElementById('auth-form').addEventListener('submit', app.handleAuth);
+                document.getElementById('auth-switch-btn').addEventListener('click', app.toggleAuthMode);
+                document.getElementById('chat-input').addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter') app.sendMessage();
+                });
+            },
+
+            // --- Auth Logic ---
+            toggleAuthMode: (e) => {
+                e.preventDefault();
+                AppState.isLoginMode = !AppState.isLoginMode;
+                const title = document.getElementById('auth-title');
+                const btn = document.querySelector('#auth-form button');
+                const nameInput = document.getElementById('name-input');
+                const switchText = document.getElementById('auth-switch-text');
+                const switchBtn = document.getElementById('auth-switch-btn');
+
+                if (AppState.isLoginMode) {
+                    title.innerText = "Welcome Back";
+                    btn.innerText = "Login";
+                    nameInput.classList.add('hidden');
+                    switchText.innerText = "New here? ";
+                    switchBtn.innerText = "Create account";
+                } else {
+                    title.innerText = "Create Account";
+                    btn.innerText = "Sign Up";
+                    nameInput.classList.remove('hidden');
+                    switchText.innerText = "Already have an account? ";
+                    switchBtn.innerText = "Login";
+                }
+            },
+
+            handleAuth: (e) => {
+                e.preventDefault();
+                const email = document.getElementById('email-input').value;
+                const password = document.getElementById('password-input').value;
+                
+                if (AppState.isLoginMode) {
+                    // Login
+                    const user = AppState.users.find(u => u.email === email && u.password === password);
+                    if (user) {
+                        app.login(user);
+                    } else {
+                        alert('Invalid credentials');
+                    }
+                } else {
+                    // Signup
+                    const name = document.getElementById('name-input').value;
+                    if(AppState.users.find(u => u.email === email)) {
+                        alert('User already exists');
+                        return;
+                    }
+                    const newUser = { name, email, password, bio: "Building something great." };
+                    AppState.users.push(newUser);
+                    localStorage.setItem('g_take_users', JSON.stringify(AppState.users));
+                    app.login(newUser);
+                }
+            },
+
+            login: (user) => {
+                AppState.currentUser = user;
+                localStorage.setItem('g_take_session', JSON.stringify(user));
+                app.showApp();
+            },
+
+            logout: () => {
+                localStorage.removeItem('g_take_session');
+                location.reload();
+            },
+
+            showAuth: () => {
+                document.getElementById('auth-container').classList.remove('hidden');
+                document.getElementById('app-container').classList.add('hidden');
+            },
+
+            showApp: () => {
+                document.getElementById('auth-container').classList.add('hidden');
+                document.getElementById('app-container').classList.remove('hidden');
+                app.loadUserData();
+            },
+
+            loadUserData: () => {
+                // Restore profile
+                document.getElementById('profile-name-display').innerText = AppState.currentUser.name;
+                document.getElementById('profile-avatar-letter').innerText = AppState.currentUser.name[0].toUpperCase();
+                document.getElementById('profile-name-input').value = AppState.currentUser.name;
+                document.getElementById('profile-bio-input').value = AppState.currentUser.bio || "";
+                
+                // Restore tasks & posts
+                app.renderTasks();
+                app.renderFeed();
+            },
+
+            saveProfile: () => {
+                const newName = document.getElementById('profile-name-input').value;
+                const newBio = document.getElementById('profile-bio-input').value;
+                
+                AppState.currentUser.name = newName;
+                AppState.currentUser.bio = newBio;
+                
+                // Update in users array
+                const index = AppState.users.findIndex(u => u.email === AppState.currentUser.email);
+                if (index !== -1) {
+                    AppState.users[index] = AppState.currentUser;
+                    localStorage.setItem('g_take_users', JSON.stringify(AppState.users));
+                    localStorage.setItem('g_take_session', JSON.stringify(AppState.currentUser)); // Update session too
+                    alert("Profile saved!");
+                    app.loadUserData();
+                }
+            },
+
+            // --- Navigation ---
+            nav: (pageId) => {
+                // UI Toggle
+                document.querySelectorAll('.page-section').forEach(el => el.classList.add('hidden'));
+                document.getElementById(`page-${pageId}`).classList.remove('hidden');
+                
+                // Menu Active State
+                document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+                // Find simple way to highlight active menu
+                const map = {'dashboard': 0, 'tasks': 1, 'community': 2, 'profile': 3};
+                document.querySelectorAll('.nav-item')[map[pageId]].classList.add('active');
+            },
+
+            // --- Chatbot ---
+            sendPrompt: (txt) => {
+                document.getElementById('chat-input').value = txt;
+                app.sendMessage();
+            },
+
+            sendMessage: () => {
+                const input = document.getElementById('chat-input');
+                const txt = input.value.trim();
+                if (!txt) return;
+
+                const list = document.getElementById('chat-messages');
+                
+                // User Msg
+                const userMsg = document.createElement('div');
+                userMsg.className = 'msg user';
+                userMsg.innerText = txt;
+                list.appendChild(userMsg);
+                input.value = '';
+                list.scrollTop = list.scrollHeight;
+
+                // Simulated Bot Response
+                setTimeout(() => {
+                    const botMsg = document.createElement('div');
+                    botMsg.className = 'msg bot';
+                    
+                    // Simple Rule-based logic
+                    let reply = "That's an interesting perspective. Tell me more.";
+                    if(txt.toLowerCase().includes('idea')) reply = "How about a SaaS platform that uses AI to optimize supply chains for small coffee shops?";
+                    if(txt.toLowerCase().includes('market')) reply = "For marketing, I suggest starting with organic content on LinkedIn and Twitter, followed by targeted SEO blogs.";
+                    if(txt.toLowerCase().includes('hello')) reply = "Hi there! Ready to build your empire?";
+                    if(txt.toLowerCase().includes('pitch')) reply = "For your pitch deck, ensure you cover: The Problem, Your Solution, Market Size, and Traction.";
+
+                    botMsg.innerText = reply;
+                    list.appendChild(botMsg);
+                    list.scrollTop = list.scrollHeight;
+                }, 1000);
+            },
+
+            // --- Tasks ---
+            getTasks: () => JSON.parse(localStorage.getItem(`tasks_${AppState.currentUser.email}`)) || [],
+            
+            renderTasks: () => {
+                const tasks = app.getTasks();
+                const container = document.getElementById('task-list-container');
+                container.innerHTML = '';
+                
+                tasks.forEach((task, index) => {
+                    const div = document.createElement('div');
+                    div.className = `task-item ${task.done ? 'completed' : ''}`;
+                    div.innerHTML = `
+                        <div class="task-left">
+                            <div class="task-check" onclick="app.toggleTask(${index})">
+                                ${task.done ? '<i class="fa-solid fa-check" style="font-size: 0.7rem; color: white;"></i>' : ''}
+                            </div>
+                            <span>${task.text}</span>
+                        </div>
+                        <i class="fa-solid fa-trash" style="color: #ef4444; cursor: pointer; font-size: 0.9rem;" onclick="app.deleteTask(${index})"></i>
+                    `;
+                    container.appendChild(div);
+                });
+            },
+
+            addTask: () => {
+                const input = document.getElementById('new-task-input');
+                const text = input.value.trim();
+                if(!text) return;
+                
+                const tasks = app.getTasks();
+                tasks.push({ text, done: false, date: new Date().toISOString() });
+                localStorage.setItem(`tasks_${AppState.currentUser.email}`, JSON.stringify(tasks));
+                input.value = '';
+                app.renderTasks();
+            },
+
+            toggleTask: (index) => {
+                const tasks = app.getTasks();
+                tasks[index].done = !tasks[index].done;
+                localStorage.setItem(`tasks_${AppState.currentUser.email}`, JSON.stringify(tasks));
+                app.renderTasks();
+            },
+
+            deleteTask: (index) => {
+                const tasks = app.getTasks();
+                tasks.splice(index, 1);
+                localStorage.setItem(`tasks_${AppState.currentUser.email}`, JSON.stringify(tasks));
+                app.renderTasks();
+            },
+
+            // --- Community ---
+            getPosts: () => JSON.parse(localStorage.getItem('g_take_posts')) || [],
+
+            renderFeed: () => {
+                const posts = app.getPosts().reverse(); // Newest first
+                const container = document.getElementById('feed-container');
+                container.innerHTML = '';
+
+                posts.forEach(post => {
+                    const div = document.createElement('div');
+                    div.className = 'glass-card post-card';
+                    div.innerHTML = `
+                        <div class="post-header">
+                            <div class="avatar">${post.author[0]}</div>
+                            <div>
+                                <div style="font-weight: 600;">${post.author}</div>
+                                <div style="font-size: 0.75rem; color: var(--text-muted);">${new Date(post.date).toLocaleDateString()}</div>
+                            </div>
+                        </div>
+                        <p style="line-height: 1.6;">${post.text}</p>
+                        <div class="post-actions">
+                            <div class="action-btn"><i class="fa-regular fa-heart"></i> Like</div>
+                            <div class="action-btn"><i class="fa-regular fa-comment"></i> Comment</div>
+                        </div>
+                    `;
+                    container.appendChild(div);
+                });
+            },
+
+            addPost: () => {
+                const input = document.getElementById('post-input');
+                const text = input.value.trim();
+                if(!text) return;
+
+                const posts = app.getPosts();
+                posts.push({
+                    text,
+                    author: AppState.currentUser.name,
+                    date: new Date().toISOString(),
+                    likes: 0
+                });
+                localStorage.setItem('g_take_posts', JSON.stringify(posts));
+                input.value = '';
+                app.renderFeed();
+            },
+
+            // --- News Widget ---
+            renderNews: () => {
+                const newsData = [
+                    { tag: 'Funding', title: 'TechStartup raises $5M Series A for AI tools', time: '2h ago' },
+                    { tag: 'Market', title: 'Global SaaS market expected to grow by 18%', time: '4h ago' },
+                    { tag: 'Local', title: 'New incubator program opening in City Center', time: '1d ago' },
+                    { tag: 'Tech', title: 'React 19 features announced today', time: '1d ago' }
+                ];
+                
+                const container = document.getElementById('news-container');
+                container.innerHTML = '';
+                
+                newsData.forEach(item => {
+                    const div = document.createElement('div');
+                    div.className = 'news-item';
+                    div.innerHTML = `
+                        <span class="news-tag">${item.tag}</span>
+                        <div class="news-headline">${item.title}</div>
+                        <span class="news-time">${item.time}</span>
+                    `;
+                    container.appendChild(div);
+                });
+            }
+        };
+
+        // Run
+        app.init();
+
+    </script>
+</body>
+</html>
